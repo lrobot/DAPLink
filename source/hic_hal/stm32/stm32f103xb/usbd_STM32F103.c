@@ -159,6 +159,10 @@ void          USBD_IntrEna(void)
 
 void USBD_Init(void)
 {
+    // USBclk=PLLclk/4.5=48Mhz
+    RCC->CFGR &= ~(BIT(22)|BIT(23)|BIT(31));
+    RCC->CFGR |= ((uint32_t)0x80800000);
+
     RCC->APB1ENR |= (1 << 23);            /* enable clock for USB               */
     USBD_IntrEna();                       /* Enable USB Interrupts              */
     /* Control USB connecting via SW                                            */
@@ -571,6 +575,11 @@ void USB_LP_CAN1_RX0_IRQHandler(void)
     uint32_t num;
     uint32_t val;
 
+    ////start///////////////////////////////////////////
+    uint32_t i = 0;
+    uint16_t nstr = 0;
+    ////end///////////////////////////////////////////
+
     istr = ISTR;
     // Zero out endpoint ID since this is read from the queue
     LastIstr |= istr & ~(ISTR_DIR | ISTR_EP_ID);
@@ -578,7 +587,29 @@ void USB_LP_CAN1_RX0_IRQHandler(void)
     ISTR = ~(istr & USB_ISTR_W0C_MASK);
     if (istr & ISTR_CTR) {
         while ((istr = ISTR) & ISTR_CTR) {
-            num = istr & ISTR_EP_ID;
+            ////start///////////////////////////////////////////
+            for (i = 0; i < 8; i++)
+            {
+                nstr = EPxREG(i);
+                if (nstr & (EP_CTR_RX | EP_CTR_TX))
+                {
+                    num = i;
+                    if (nstr & EP_CTR_RX)
+                    {
+                        istr |= ISTR_DIR;
+                    }
+                    if (nstr & EP_CTR_TX)
+                    {
+                        istr &= ISTR_DIR;
+                    }
+                    break;
+                }
+            }
+            /* extract highest priority endpoint number */
+            //EPindex = (uint8_t)(wIstr & ISTR_EP_ID);
+            ////end///////////////////////////////////////////
+
+            //num = istr & ISTR_EP_ID;
             val = EPxREG(num);
 
             // Process and filter out the zero length status out endpoint to prevent

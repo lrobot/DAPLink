@@ -57,11 +57,11 @@ This information includes:
 
 /// Indicate that JTAG communication mode is available at the Debug Port.
 /// This information is returned by the command \ref DAP_Info as part of <b>Capabilities</b>.
-#define DAP_JTAG                0               ///< JTAG Mode: 1 = available, 0 = not available.
+#define DAP_JTAG                ENABLE_JTAG     ///< JTAG Mode: 1 = available, 0 = not available.
 
 /// Configure maximum number of JTAG devices on the scan chain connected to the Debug Access Port.
 /// This setting impacts the RAM requirements of the Debug Unit. Valid range is 1 .. 255.
-#define DAP_JTAG_DEV_CNT        0               ///< Maximum number of JTAG devices on scan chain
+#define DAP_JTAG_DEV_CNT        (ENABLE_JTAG ? 8 : 0) ///< Maximum number of JTAG devices on scan chain
 
 /// Default communication mode on the Debug Access Port.
 /// Used for the command \ref DAP_Connect when Port Default mode is selected.
@@ -70,7 +70,7 @@ This information includes:
 /// Default communication speed on the Debug Access Port for SWD and JTAG mode.
 /// Used to initialize the default SWD/JTAG clock frequency.
 /// The command \ref DAP_SWJ_Clock can be used to overwrite this default setting.
-#define DAP_DEFAULT_SWJ_CLOCK   5000000         ///< Default SWD/JTAG clock frequency in Hz.
+#define DAP_DEFAULT_SWJ_CLOCK   10000000         ///< Default SWD/JTAG clock frequency in Hz.
 
 /// Maximum Package Size for Command and Response data.
 /// This configuration settings is used to optimize the communication performance with the
@@ -86,7 +86,7 @@ This information includes:
 /// This configuration settings is used to optimize the communication performance with the
 /// debugger and depends on the USB peripheral. For devices with limited RAM or USB buffer the
 /// setting can be reduced (valid range is 1 .. 255). Change setting to 4 for High-Speed USB.
-#define DAP_PACKET_COUNT       4              ///< Buffers: 64 = Full-Speed, 4 = High-Speed.
+#define DAP_PACKET_COUNT       100              ///< Buffers: 64 = Full-Speed, 4 = High-Speed.
 
 /// Indicate that UART Serial Wire Output (SWO) trace is available.
 /// This information is returned by the command \ref DAP_Info as part of <b>Capabilities</b>.
@@ -103,7 +103,7 @@ This information includes:
 #define SWO_MANCHESTER          0               ///< SWO Manchester:  1 = available, 0 = not available.
 
 /// SWO Trace Buffer Size.
-#define SWO_BUFFER_SIZE         4096U           ///< SWO Trace Buffer Size in bytes (must be 2^n).
+#define SWO_BUFFER_SIZE         8192U           ///< SWO Trace Buffer Size in bytes (must be 2^n).
 
 /// SWO Streaming Trace.
 #define SWO_STREAM              0               ///< SWO Streaming Trace: 1 = available, 0 = not available.
@@ -119,10 +119,10 @@ This information includes:
 #define DAP_UART_DRIVER         1               ///< USART Driver instance number (Driver_USART#).
 
 /// UART Receive Buffer Size.
-#define DAP_UART_RX_BUFFER_SIZE 1024U           ///< Uart Receive Buffer Size in bytes (must be 2^n).
+#define DAP_UART_RX_BUFFER_SIZE 2048U           ///< Uart Receive Buffer Size in bytes (must be 2^n).
 
 /// UART Transmit Buffer Size.
-#define DAP_UART_TX_BUFFER_SIZE 1024U           ///< Uart Transmit Buffer Size in bytes (must be 2^n).
+#define DAP_UART_TX_BUFFER_SIZE 2048U           ///< Uart Transmit Buffer Size in bytes (must be 2^n).
 
 /// Indicate that UART Communication via USB COM Port is available.
 /// This information is returned by the command \ref DAP_Info as part of <b>Capabilities</b>.
@@ -240,7 +240,21 @@ Configures the DAP Hardware I/O pins for JTAG mode:
 __STATIC_INLINE void PORT_JTAG_SETUP(void)
 {
 #if (DAP_JTAG != 0)
-
+    // Set TCK HIGH
+    pin_out_init(SWCLK_TCK_PIN_PORT, SWCLK_TCK_PIN_Bit);
+    SWCLK_TCK_PIN_PORT->BSRR = SWCLK_TCK_PIN;
+    // Set TMS HIGH
+    pin_out_init(SWDIO_OUT_PIN_PORT, SWDIO_OUT_PIN_Bit);
+    SWDIO_OUT_PIN_PORT->BSRR = SWDIO_OUT_PIN;
+    pin_in_init(SWDIO_IN_PIN_PORT, SWDIO_IN_PIN_Bit, 1);
+    // Set TDI HIGH
+    pin_out_init(TDI_PIN_PORT, TDI_PIN_Bit);
+    TDI_PIN_PORT->BSRR = TDI_PIN;
+    // Set TDO INPUT
+    pin_in_init(TDO_PIN_PORT, TDO_PIN_Bit, 1);
+    // Set RESET HIGH
+    pin_out_od_init(nRESET_PIN_PORT, nRESET_PIN_Bit);//TODO - fix reset logic
+    nRESET_PIN_PORT->BSRR = nRESET_PIN;
 #endif
 }
 
@@ -273,6 +287,10 @@ __STATIC_INLINE void PORT_OFF(void)
     pin_in_init(SWCLK_TCK_PIN_PORT, SWCLK_TCK_PIN_Bit, 0);
     pin_in_init(SWDIO_OUT_PIN_PORT, SWDIO_OUT_PIN_Bit, 0);
     pin_in_init(SWDIO_IN_PIN_PORT, SWDIO_IN_PIN_Bit, 0);
+#if (DAP_JTAG != 0)
+    pin_in_init(TDI_PIN_PORT, TDI_PIN_Bit, 0);
+    pin_in_init(TDO_PIN_PORT, TDO_PIN_Bit, 0);
+#endif
 }
 
 // SWCLK/TCK I/O pin -------------------------------------
@@ -374,7 +392,11 @@ __STATIC_FORCEINLINE void PIN_SWDIO_OUT_DISABLE(void)
 */
 __STATIC_FORCEINLINE uint32_t PIN_TDI_IN(void)
 {
+#if (DAP_JTAG != 0)
+    return ((TDI_PIN_PORT->IDR & TDI_PIN) ? 1 : 0);
+#else
     return (0);   // Not available
+#endif
 }
 
 /** TDI I/O pin: Set Output.
@@ -382,7 +404,14 @@ __STATIC_FORCEINLINE uint32_t PIN_TDI_IN(void)
 */
 __STATIC_FORCEINLINE void PIN_TDI_OUT(uint32_t bit)
 {
+#if (DAP_JTAG != 0)
+    if (bit & 1)
+        TDI_PIN_PORT->BSRR = TDI_PIN;
+    else
+        TDI_PIN_PORT->BRR = TDI_PIN;
+#else
     ;             // Not available
+#endif
 }
 
 
@@ -393,7 +422,11 @@ __STATIC_FORCEINLINE void PIN_TDI_OUT(uint32_t bit)
 */
 __STATIC_FORCEINLINE uint32_t PIN_TDO_IN(void)
 {
+#if (DAP_JTAG != 0)
+    return ((TDO_PIN_PORT->IDR & TDO_PIN) ? 1 : 0);
+#else
     return (0);   // Not available
+#endif
 }
 
 
@@ -438,8 +471,11 @@ __STATIC_FORCEINLINE void     PIN_nRESET_OUT(uint32_t bit)
 {
     if (bit & 1)
         nRESET_PIN_PORT->BSRR = nRESET_PIN;
-    else
-        nRESET_PIN_PORT->BRR = nRESET_PIN;
+    else{
+        
+			 swd_write_word((uint32_t)&SCB->AIRCR, ((0x5FA << SCB_AIRCR_VECTKEY_Pos) | SCB_AIRCR_SYSRESETREQ_Msk));
+			 nRESET_PIN_PORT->BRR = nRESET_PIN;
+		}
 }
 
 //**************************************************************************************************
@@ -463,9 +499,9 @@ It is recommended to provide the following LEDs for status indication:
 __STATIC_INLINE void LED_CONNECTED_OUT(uint32_t bit)
 {
     if (bit & 1)
-        CONNECTED_LED_PORT->BRR = CONNECTED_LED_PIN; // LED on
+        CONNECTED_LED_PORT->BSRR = CONNECTED_LED_PIN; // LED on
     else
-        CONNECTED_LED_PORT->BSRR = CONNECTED_LED_PIN;// LED off
+        CONNECTED_LED_PORT->BRR = CONNECTED_LED_PIN;// LED off
 }
 
 /** Debug Unit: Set status Target Running LED.
@@ -540,7 +576,7 @@ __STATIC_INLINE void DAP_SETUP(void)
     nRESET_PIN_PORT->BSRR = nRESET_PIN;
 
     pin_out_init(CONNECTED_LED_PORT, CONNECTED_LED_PIN_Bit);
-    CONNECTED_LED_PORT->BSRR = CONNECTED_LED_PIN;
+    CONNECTED_LED_PORT->BRR = CONNECTED_LED_PIN;
 }
 
 /** Reset Target Device with custom specific I/O pin or command sequence.
