@@ -11,12 +11,7 @@
 
 /* Alias word address of HSION bit */
 #define CR_OFFSET                 (RCC_OFFSET + 0x00)
-#define HSION_BitNumber           0x00
-#define CR_HSION_BB               (PERIPH_BB_BASE + (CR_OFFSET * 32) + (HSION_BitNumber * 4))
 
-/* Alias word address of PLLON bit */
-#define PLLON_BitNumber           0x18
-#define CR_PLLON_BB               (PERIPH_BB_BASE + (CR_OFFSET * 32) + (PLLON_BitNumber * 4))
 
 #ifdef air32F10X_CL
  /* Alias word address of PLL2ON bit */
@@ -28,9 +23,7 @@
  #define CR_PLL3ON_BB              (PERIPH_BB_BASE + (CR_OFFSET * 32) + (PLL3ON_BitNumber * 4))
 #endif /* air32F10X_CL */ 
 
-/* Alias word address of CSSON bit */
-#define CSSON_BitNumber           0x13
-#define CR_CSSON_BB               (PERIPH_BB_BASE + (CR_OFFSET * 32) + (CSSON_BitNumber * 4))
+
 
 /* --- CFGR Register ---*/
 
@@ -47,21 +40,12 @@
 
 /* --- BDCR Register ---*/
 
-/* Alias word address of RTCEN bit */
-#define BDCR_OFFSET               (RCC_OFFSET + 0x20)
-#define RTCEN_BitNumber           0x0F
-#define BDCR_RTCEN_BB             (PERIPH_BB_BASE + (BDCR_OFFSET * 32) + (RTCEN_BitNumber * 4))
 
-/* Alias word address of BDRST bit */
-#define BDRST_BitNumber           0x10
-#define BDCR_BDRST_BB             (PERIPH_BB_BASE + (BDCR_OFFSET * 32) + (BDRST_BitNumber * 4))
+
 
 /* --- CSR Register ---*/
 
-/* Alias word address of LSION bit */
-#define CSR_OFFSET                (RCC_OFFSET + 0x24)
-#define LSION_BitNumber           0x00
-#define CSR_LSION_BB              (PERIPH_BB_BASE + (CSR_OFFSET * 32) + (LSION_BitNumber * 4))
+
 
 #ifdef air32F10X_CL
 /* --- CFGR2 Register ---*/
@@ -123,17 +107,7 @@
 /* RCC Flag Mask */
 #define FLAG_Mask                 ((volatile uint8_t)0x1F)
 
-/* CIR register byte 2 (Bits[15:8]) base address */
-#define CIR_BYTE2_ADDRESS         ((volatile uint32_t)0x40021009)
 
-/* CIR register byte 3 (Bits[23:16]) base address */
-#define CIR_BYTE3_ADDRESS         ((volatile uint32_t)0x4002100A)
-
-/* CFGR register byte 4 (Bits[31:24]) base address */
-#define CFGR_BYTE4_ADDRESS        ((volatile uint32_t)0x40021007)
-
-/* BDCR register base address */
-#define BDCR_ADDRESS              (PERIPH_BASE + BDCR_OFFSET)
 
 /**
   * @}

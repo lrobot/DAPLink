@@ -466,7 +466,7 @@ __STATIC_FORCEINLINE uint32_t PIN_nRESET_IN(void)
            - 1: release device hardware reset.
 */
 // TODO - sw specific implementation should be created
-
+extern uint8_t swd_write_word(uint32_t addr, uint32_t val);
 __STATIC_FORCEINLINE void     PIN_nRESET_OUT(uint32_t bit)
 {
     if (bit & 1)

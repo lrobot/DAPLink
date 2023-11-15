@@ -95,5 +95,6 @@ custom_targets.json
 log.txt
 mbed-os/
 
+projectfiles/
 #vscode editor
 .vscode

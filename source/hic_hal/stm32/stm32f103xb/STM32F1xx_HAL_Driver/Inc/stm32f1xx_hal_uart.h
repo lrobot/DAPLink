@@ -588,7 +588,7 @@ do{                                         \
 #define UART_CR2_REG_INDEX               2    
 #define UART_CR3_REG_INDEX               3    
 
-#define UART_DIV_SAMPLING16(_PCLK_, _BAUD_)         (((_PCLK_)*25)/(4*(_BAUD_)))
+#define UART_DIV_SAMPLING16(_PCLK_, _BAUD_)         ((_PCLK_)/(4*(_BAUD_))*25)
 #define UART_DIVMANT_SAMPLING16(_PCLK_, _BAUD_)     (UART_DIV_SAMPLING16((_PCLK_), (_BAUD_))/100)
 #define UART_DIVFRAQ_SAMPLING16(_PCLK_, _BAUD_)     (((UART_DIV_SAMPLING16((_PCLK_), (_BAUD_)) - (UART_DIVMANT_SAMPLING16((_PCLK_), (_BAUD_)) * 100)) * 16 + 50) / 100)
 /* UART BRR = mantissa + overflow + fraction

@@ -24,6 +24,7 @@ tool_specific:
                 - -fverbose-asm
                 - -mno-unaligned-access
             ld_flags:
+                - -Wl,--no-warn-rwx-segments
                 - --specs=nano.specs
                 - --specs=nosys.specs
                 - -Wl,-check-sections

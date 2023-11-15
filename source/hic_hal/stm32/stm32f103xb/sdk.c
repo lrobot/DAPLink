@@ -72,7 +72,7 @@ FlagStatus RCC_GetFlagStatus(uint8_t RCC_FLAG)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-
+extern uint32_t AIR_RCC_PLLConfig(uint32_t RCC_PLLSource, uint32_t RCC_PLLMul, uint8_t Latency);
 
 /**
     * @brief  Switch the PLL source from HSI to HSE bypass, and select the PLL as SYSCLK
